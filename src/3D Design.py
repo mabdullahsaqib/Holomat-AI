@@ -12,9 +12,10 @@ load_dotenv()
 meshy_api_key = os.getenv("MESHY_API_KEY")
 meshy_api_url = os.getenv("MESHY_API_URL")
 firebase_storage_bucket = os.getenv("FIREBASE_STORAGE_BUCKET")
+firebase_cred_path = os.getenv("FIREBASE_CRED_PATH")
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("C:/Users/Administrator/Documents/DOCUMENTS/holomat-ai-firebase-adminsdk-tjlnn-198fa2071b.json")
+cred = credentials.Certificate(firebase_cred_path)
 firebase_admin.initialize_app(cred, {
     'storageBucket': firebase_storage_bucket
 })
