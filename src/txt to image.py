@@ -22,29 +22,29 @@ firebase_admin.initialize_app(cred, {
 # Initialize Pollinations AI and generate an image
 model = ai.Image()
 image = model.generate(
-    prompt="a ninja, no background, only character, with katana, black clothes, anime style, full body",
+    prompt="a dragon, 3D, white background, only single character model, anime style, full body",
     width=768,
     height=1280,
 )
 
+
+print("Initial image url : ", image.url)
+
 # Save the generated image
-image_path = "ninjaGo.png"
+image_path = "dragon.png"
 image.save(image_path)
 
 # Upload the image to Firebase Storage
 bucket = storage.bucket()
 blob = bucket.blob(image_path)
 blob.upload_from_filename(image_path)
+blob.make_public()
 
 # Get the image URL
-# image_url = blob.public_url
-# print(f"Image URL: {image_url}")
-
-image_url = "https://firebasestorage.googleapis.com/v0/b/holomat-ai.appspot.com/o/ninja.png?alt=media&token=126c213c-6e83-482a-ac42-af590c73560c"
+image_url = blob.public_url
 print(f"Image URL: {image_url}")
 
-
-# Prepare payload and headers for Meshy API request
+# # Prepare payload and headers for Meshy API request
 payload = {
     "image_url": image_url,
     "enable_pbr": True,
@@ -61,25 +61,30 @@ print(f"Headers: {headers}")
 # Make a request to convert the image to a 3D model
 try:
     response = requests.post(meshy_api_url, headers=headers, json=payload)
-    response.raise_for_status()
+    response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
 except requests.exceptions.HTTPError as err:
     print(f"HTTP error occurred: {err}")
     print(f"Response content: {response.content}")
-
-# If the request is successful, process the response
-if response.status_code == 200:
-    print(response.json())
-    task_id = response.json()["result"]
-    print(f"Task ID: {task_id}")
-
-    # Wait for some time before checking the status of the task
-    time.sleep(180)
-
-    # Check the status of the 3D model generation task
-    response = requests.get(f"{meshy_api_url}/{task_id}", headers=headers)
-    response.raise_for_status()
-
-    print(response.json())
 else:
-    print(f"Failed to initiate the task. Status code: {response.status_code}")
-    print(f"Response content: {response.content}")
+    response_data = response.json()
+    print(response_data)
+
+    if 'result' in response_data:
+        task_id = response_data['result']
+        print(f"Task ID: {task_id}")
+
+        # Wait for some time before checking the status of the task
+        time.sleep(180)
+
+        # Check the status of the 3D model generation task
+        try:
+            status_response = requests.get(f"{meshy_api_url}/{task_id}", headers=headers)
+            status_response.raise_for_status()
+            status_data = status_response.json()
+            print(status_data)
+        except requests.exceptions.HTTPError as err:
+            print(f"HTTP error occurred when checking status: {err}")
+            print(f"Response content: {status_response.content}")
+    else:
+        print("Failed to retrieve task ID from the response")
+        print(f"Response content: {response_data}")
