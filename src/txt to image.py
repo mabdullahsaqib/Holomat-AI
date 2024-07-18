@@ -1,28 +1,52 @@
+import pollinations.ai as ai
+import os
+import time
 import requests
 from dotenv import load_dotenv
-import os
 
+# Load environment variables from a .env file
 load_dotenv()
 
-limewireapi_key = os.getenv("LIMEWIRE_API_KEY")
+meshy_api_key = os.getenv("MESHY_API_KEY")
 
-url = "https://api.limewire.com/api/image/generation"
+# Version 1
+model: ai.Image = ai.Image()
+image: ai.ImageObject = model.generate(
+      prompt="a ninja, no background, only character, with  katana, black clothes, anime style",
+      # negative...width...height...height...seed...model...nologo
+      width=1024,
+      height=1024,
+)
 
+print(image.url)
+
+# Prepare payload and headers for Meshy API request
 payload = {
-  "prompt": "a ninja, black clothes, holding a katana, anime style",
-  "aspect_ratio": "1:1"
+    "image_url": image.url,
+    "enable_pbr": True,
 }
-
 headers = {
-  "Content-Type": "application/json",
-  "X-Api-Version": "v1",
-  "Accept": "application/json",
-  "Authorization": f"Bearer {limewireapi_key}"
+    "Authorization": f"Bearer {meshy_api_key}"
 }
 
-response = requests.post(url, json=payload, headers=headers)
+meshy_api_url = os.getenv("MESHY_API_URL")
 
-data = response.json()
-print(data)
-# image_url = response.json()["data"]["asset_url"]
-# print(image_url)
+# Make a request to convert image to 3D model
+response = requests.post(meshy_api_url, headers=headers, json=payload)
+response.raise_for_status()
+
+print(response.json())
+task_id = response.json()["result"]
+print("task id : ", task_id)
+
+# Wait for some time before checking the status of the task
+time.sleep(180)
+
+# Check the status of the 3D model generation task
+response = requests.get(f"{meshy_api_url}/{task_id}", headers=headers)
+response.raise_for_status()
+
+print(response.json())
+
+
+
