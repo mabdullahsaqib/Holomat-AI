@@ -23,7 +23,7 @@ firebase_admin.initialize_app(cred, {
 # Initialize Pollinations AI and generate an image
 model = ai.Image()
 image = model.generate(
-    prompt="a dragon, 3D, white background, only single character model, anime style, full body",
+    prompt="doraemon, 3D, white background, only single character model, anime style, full body, facing camera",
     width=768,
     height=1280,
 )
@@ -32,7 +32,7 @@ image = model.generate(
 print("Initial image url : ", image.url)
 
 # Save the generated image
-image_path = "dragon.png"
+image_path = "doraemon.png"
 image.save(image_path)
 
 # Upload the image to Firebase Storage
